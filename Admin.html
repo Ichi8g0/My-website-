@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>صفحة الادمن</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        #categoryDisplay {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        .category-box {
+            border: 2px solid #6c5ce7;
+            padding: 10px;
+            cursor: pointer;
+            width: 120px;
+            height: 120px;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #a29bfe;
+            border-radius: 10px;
+            transition: background-color 0.3s, transform 0.3s;
+            position: relative;
+        }
+        .category-box:hover {
+            background-color: #81ecec;
+            transform: scale(1.1);
+        }
+        .category-box span {
+            font-size: 14px;
+            font-weight: bold;
+            color: #fff;
+        }
+        #categoryForm, #contentForm {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        input[type="text"], textarea {
+            padding: 10px;
+            width: 200px;
+            margin-right: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #6c5ce7;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #81ecec;
+        }
+        #contentDisplay {
+            margin: 20px 0;
+        }
+        .content-item {
+            border: 1px solid #ccc;
+            padding: 15px;
+            margin: 10px 0;
+            background-color: white;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>صفحة الادمن </h1>
+    
+    <!-- Form for adding a new category -->
+    <div id="categoryForm">
+        <input type="text" id="newCategory" placeholder="Enter new category name" />
+        <button onclick="addCategory()">Add Category</button>
+        <button onclick="deleteCategory()">Delete Category</button>
+    </div>
+
+    <!-- Display existing categories -->
+    <div id="categoryDisplay"></div>
+
+    <!-- Content form (visible after choosing a category) -->
+    <div id="contentForm" style="display: none;">
+        <h2>Add Content to Category</h2>
+        <textarea id="contentText" placeholder="Enter content text" rows="4" cols="50"></textarea><br><br>
+        <input type="file" id="contentImage" accept="image/*" /><br><br>
+        <button onclick="addContent()">Add Content</button>
+        <button onclick="cancelContent()">Cancel</button>
+    </div>
+
+    <!-- Display content for the selected category -->
+    <div id="contentDisplay"></div>
+
+    <script>
+        let selectedCategory = null;
+
+        // Function to load and display categories
+        function displayCategories() {
+            const categories = JSON.parse(localStorage.getItem("categories")) || [];
+            const categoryDisplay = document.getElementById("categoryDisplay");
+            categoryDisplay.innerHTML = ''; // Clear previous categories
+
+            categories.forEach(category => {
+                const categoryBox = document.createElement('div');
+                categoryBox.classList.add('category-box');
+                categoryBox.innerHTML = `<span>${category}</span>`;
+                categoryBox.onclick = () => chooseCategory(category);
+                categoryDisplay.appendChild(categoryBox);
+            });
+        }
+
+        // Function to add a new category
+        function addCategory() {
+            const newCategory = document.getElementById("newCategory").value.trim();
+            if (newCategory === "") {
+                alert("Please enter a category name.");
+                return;
+            }
+
+            let categories = JSON.parse(localStorage.getItem("categories")) || [];
+            if (categories.includes(newCategory)) {
+                alert("Category already exists!");
+                return;
+            }
+
+            categories.push(newCategory);
+            localStorage.setItem("categories", JSON.stringify(categories));
+            displayCategories();
+            document.getElementById("newCategory").value = ""; // Clear input field
+            alert("Category added!");
+        }
+
+        // Function to delete a category
+        function deleteCategory() {
+            const categoryToDelete = prompt("Enter the name of the category to delete:");
+            let categories = JSON.parse(localStorage.getItem("categories")) || [];
+
+            if (categories.includes(categoryToDelete)) {
+                categories = categories.filter(category => category !== categoryToDelete);
+                localStorage.setItem("categories", JSON.stringify(categories));
+                displayCategories();
+                alert("Category deleted!");
+            } else {
+                alert("Category not found!");
+            }
+        }
+
+        // Function to choose a category and show content form
+        function chooseCategory(category) {
+            selectedCategory = category;
+            document.getElementById("contentForm").style.display = 'block';
+            document.getElementById("contentText").value = ''; // Clear previous content
+            document.getElementById("contentImage").value = ''; // Clear image input
+            alert(`You chose the category: ${category}`);
+        }
+
+        // Function to add content (text and image) to the selected category
+        function addContent() {
+            const contentText = document.getElementById("contentText").value.trim();
+            const contentImage = document.getElementById("contentImage").files[0];
+            if (!contentText && !contentImage) {
+                alert("Please provide text or an image.");
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const imageUrl = event.target.result;
+
+                // Retrieve or initialize content array for the selected category
+                const content = JSON.parse(localStorage.getItem("siteContent")) || [];
+                content.push({ category: selectedCategory, text: contentText, imageUrl });
+                localStorage.setItem("siteContent", JSON.stringify(content));
+
+                alert("Content added!");
+                cancelContent();
+                displayContent();
+            };
+
+            if (contentImage) {
+                reader.readAsDataURL(contentImage); // Read image if provided
+            } else {
+                // Add content without image
+                const content = JSON.parse(localStorage.getItem("siteContent")) || [];
+                content.push({ category: selectedCategory, text: contentText, imageUrl: '' });
+                localStorage.setItem("siteContent", JSON.stringify(content));
+
+                alert("Content added!");
+                cancelContent();
+                displayContent();
+            }
+        }
+
+        // Function to cancel the content form and reset
+        function cancelContent() {
+            document.getElementById("contentForm").style.display = 'none';
+            selectedCategory = null; // Reset selected category
+        }
+
+        // Function to display content for the selected category
+        function displayContent() {
+            const content = JSON.parse(localStorage.getItem("siteContent")) || [];
+            const contentDisplay = document.getElementById("contentDisplay");
+            contentDisplay.innerHTML = ''; // Clear previous content
+
+            const filteredContent = content.filter(item => item.category === selectedCategory);
+
+            if (filteredContent.length === 0) {
+                contentDisplay.innerHTML = "<p>No content available for this category.</p>";
+            } else {
+                filteredContent.forEach(item => {
+                    const contentItem = document.createElement('div');
+                    contentItem.classList.add('content-item');
+                    contentItem.innerHTML = `
+                        <p>${item.text}</p>
+                        ${item.imageUrl ? `<img src="${item.imageUrl}" alt="Image">` : ''}
+                    `;
+                    contentDisplay.appendChild(contentItem);
+                });
+            }
+        }
+
+        // Load categories and content on page load
+        window.onload = function() {
+            displayCategories();
+        };
+    </script>
+
+</body>
+</html>

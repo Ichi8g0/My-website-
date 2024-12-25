@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بلوكس فروت العرب</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            margin: 0;
+            height: 100%;
+            background-image: url('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTFDMVzK_DbZ7cc4fWLuv5ouBiaN3__6mzsP9k1VfoHww&s');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+            margin-top: 20px;
+            color: #fff; /* لون النص الأبيض */
+        }
+        #categoryDisplay {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        .category-box {
+            border: 2px solid #6c5ce7;
+            padding: 10px;
+            cursor: pointer;
+            width: 120px;
+            height: 120px;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #a29bfe;
+            border-radius: 10px;
+            transition: background-color 0.3s, transform 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        .category-box:hover {
+            background-color: #81ecec;
+            transform: scale(1.1);
+        }
+        .category-box span {
+            font-size: 14px;
+            font-weight: bold;
+            color: #fff;
+        }
+        #contentDisplay {
+            margin: 20px auto;
+            max-width: 90%; /* تقليل العرض ليكون مناسبًا */
+        }
+        .content-item {
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+            background-color: white;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            animation: fadeInUp 0.5s ease forwards;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 5px;
+        }
+        .hidden {
+            display: none;
+        }
+        #supportButton {
+            display: block;
+            width: 200px;
+            margin: 20px auto;
+            padding: 10px;
+            background-color: #6c5ce7;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            text-align: center;
+        }
+        #supportBox {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: black;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            max-width: 300px;
+        }
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>بلوكس فروت العرب</h1>
+    <div id="categoryDisplay"></div>
+    <div id="contentDisplay"></div>
+
+    <!-- Button to open support box -->
+    <button id="supportButton">كلم الدعم</button>
+    
+    <!-- Support Box -->
+    <div id="supportBox">
+        <p>رقم الدعم: 01030178661</p>
+    </div>
+
+    <script>
+        // Variable to track the currently open category
+        let currentlyOpenCategory = null;
+
+        // Display categories based on content
+        function displayCategories() {
+            const content = JSON.parse(localStorage.getItem("siteContent")) || [];
+            const categories = [...new Set(content.map(item => item.category))]; // Get unique categories
+
+            const categoryDisplay = document.getElementById("categoryDisplay");
+            categoryDisplay.innerHTML = ''; // Clear previous categories
+
+            categories.forEach(category => {
+                const categoryBox = document.createElement('div');
+                categoryBox.classList.add('category-box');
+                categoryBox.innerHTML = `<span>${category}</span>`;
+                categoryBox.onclick = () => toggleCategory(category);
+                categoryDisplay.appendChild(categoryBox);
+            });
+        }
+
+        // Display content based on the selected category
+        function toggleCategory(selectedCategory) {
+            const contentDisplay = document.getElementById("contentDisplay");
+            const content = JSON.parse(localStorage.getItem("siteContent")) || [];
+
+            // If the same category is clicked, close it
+            if (currentlyOpenCategory === selectedCategory) {
+                contentDisplay.innerHTML = ''; // Clear content if the same category is clicked again
+                currentlyOpenCategory = null;
+                return;
+            }
+
+            // Clear previous content
+            contentDisplay.innerHTML = '';
+
+            // Filter content by selected category
+            const filteredContent = content.filter(item => item.category === selectedCategory);
+            if (filteredContent.length === 0) {
+                contentDisplay.innerHTML = `<p>No content available for this category.</p>`;
+            } else {
+                filteredContent.forEach(item => {
+                    const contentItem = document.createElement('div');
+                    contentItem.classList.add('content-item');
+                    contentItem.innerHTML = `
+                        <h3 style="color: ${item.textColor};">${item.category}</h3>
+                        <p style="color: ${item.textColor};">${item.text}</p>
+                        <img src="${item.imageUrl}" alt="Image">
+                    `;
+                    contentDisplay.appendChild(contentItem);
+                });
+            }
+
+            // Scroll to the content display section
+            contentDisplay.scrollIntoView({ behavior: 'smooth' });
+
+            // Update the currently open category
+            currentlyOpenCategory = selectedCategory;
+        }
+
+        // Toggle support box visibility
+        document.getElementById("supportButton").onclick = function() {
+            const supportBox = document.getElementById("supportBox");
+            supportBox.style.display = supportBox.style.display === 'block' ? 'none' : 'block';
+        };
+
+        // Load categories on page load
+        window.onload = function() {
+            displayCategories();
+        };
+    </script>
+</body>
+</html>
